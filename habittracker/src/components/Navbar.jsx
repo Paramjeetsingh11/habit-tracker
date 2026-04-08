@@ -39,13 +39,6 @@ const Navbar = () => {
             Home
           </Button>
 
-          <Button
-            component={Link}
-            to="/about"
-            sx={{ color: "#333", textTransform: "none" }}
-          >
-            About Us
-          </Button>
         </Box>
 
         {/* 🔹 RIGHT: AUTH BUTTONS */}

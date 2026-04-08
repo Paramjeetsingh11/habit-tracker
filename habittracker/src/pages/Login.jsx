@@ -1,6 +1,17 @@
 import React, { useState } from "react";
+import {
+  Container,
+  Paper,
+  TextField,
+  Typography,
+  Button,
+  Box,
+  InputAdornment,
+  IconButton
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
-import { loginUser } from "../api/userApi"; // ✅ IMPORT API
+import { loginUser } from "../api/userApi";
 
 function Login() {
   const [formData, setFormData] = useState({
@@ -18,7 +29,6 @@ function Login() {
     });
   };
 
-  // ✅ UPDATED LOGIN FUNCTION
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -28,22 +38,19 @@ function Login() {
     }
 
     try {
-      // ✅ CALL BACKEND API
       const res = await loginUser(formData);
 
       alert("Login Successful ✅");
 
-      // ✅ STORE USER
       localStorage.setItem("user", JSON.stringify(res.data));
 
-      // ✅ REDIRECT
       navigate("/dashboard");
 
     } catch (err) {
       console.error(err);
 
       if (err.response) {
-        alert(err.response.data); // backend error
+        alert(err.response.data);
       } else {
         alert("Server error ❌");
       }
@@ -51,105 +58,93 @@ function Login() {
   };
 
   return (
-    <div style={styles.container}>
-      <form style={styles.form} onSubmit={handleSubmit}>
-        <h2 style={styles.heading}>Login</h2>
-
-        <input
-          style={styles.input}
-          type="email"
-          name="email"
-          placeholder="Email Address"
-          value={formData.email}
-          onChange={handleChange}
-        />
-
-        <div style={styles.passwordBox}>
-          <input
-            style={styles.input}
-            type={showPassword ? "text" : "password"}
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-          />
-          <span
-            style={styles.toggle}
-            onClick={() => setShowPassword(!showPassword)}
+    <Box
+      sx={{
+        minHeight: "100vh",
+        backgroundColor: "#F5F7FA",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper
+          elevation={3}
+          sx={{
+            p: 4,
+            borderRadius: "12px"
+          }}
+        >
+          <Typography
+            variant="h5"
+            textAlign="center"
+            fontWeight="bold"
+            mb={3}
           >
-            {showPassword ? "Hide" : "Show"}
-          </span>
-        </div>
+            Welcome Back 👋
+          </Typography>
 
-        <button style={styles.button} type="submit">
-          Login
-        </button>
+          <form onSubmit={handleSubmit}>
+            {/* EMAIL */}
+            <TextField
+              fullWidth
+              label="Email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              sx={{ mb: 2 }}
+            />
 
-        <p style={styles.text}>
-          Don’t have an account?{" "}
-          <Link to="/register" style={styles.link}>
-            Register
-          </Link>
-        </p>
-      </form>
-    </div>
+            {/* PASSWORD */}
+            <TextField
+              fullWidth
+              label="Password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              value={formData.password}
+              onChange={handleChange}
+              sx={{ mb: 2 }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowPassword(!showPassword)}>
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                )
+              }}
+            />
+
+            {/* BUTTON */}
+            <Button
+              fullWidth
+              type="submit"
+              variant="contained"
+              sx={{
+                backgroundColor: "#4CAF50",
+                borderRadius: "8px",
+                py: 1.2,
+                "&:hover": { backgroundColor: "#43A047" }
+              }}
+            >
+              Login
+            </Button>
+
+            {/* REGISTER LINK */}
+            <Typography textAlign="center" mt={2}>
+              Don’t have an account?{" "}
+              <Link
+                to="/register"
+                style={{ color: "#4CAF50", fontWeight: "bold" }}
+              >
+                Register
+              </Link>
+            </Typography>
+          </form>
+        </Paper>
+      </Container>
+    </Box>
   );
 }
-
-const styles = {
-  container: {
-    height: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "linear-gradient(135deg, #667eea, #764ba2)"
-  },
-  form: {
-    background: "#fff",
-    padding: "30px",
-    borderRadius: "10px",
-    width: "350px",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.2)",
-    textAlign: "center"
-  },
-  heading: {
-    marginBottom: "20px"
-  },
-  input: {
-    width: "100%",
-    padding: "10px",
-    margin: "10px 0",
-    borderRadius: "5px",
-    border: "1px solid #ccc"
-  },
-  passwordBox: {
-    position: "relative"
-  },
-  toggle: {
-    position: "absolute",
-    right: "10px",
-    top: "18px",
-    cursor: "pointer",
-    fontSize: "12px",
-    color: "#555"
-  },
-  button: {
-    width: "100%",
-    padding: "10px",
-    background: "#667eea",
-    color: "#fff",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer"
-  },
-  text: {
-    marginTop: "10px"
-  },
-  link: {
-    color: "#667eea",
-    fontWeight: "bold",
-    textDecoration: "none"
-  }
-};
 
 export default Login;
