@@ -1,13 +1,13 @@
 // src/pages/Dashboard.js
+
 import { useEffect, useState } from "react";
 import { getHabits, getLogs } from "../api/habitApi";
 import HabitForm from "../components/HabitForm";
 import HabitList from "../components/HabitList";
 import MUICalendar from "../components/MUICalendar";
-import { motion } from "framer-motion";
 import PieChartView from "../components/PieChartView";
+import { motion } from "framer-motion";
 
-// ✅ MUI IMPORTS
 import {
   Box,
   Container,
@@ -30,7 +30,7 @@ function Dashboard() {
 
   const fetchLogs = async () => {
     try {
-      const res = await getLogs(1); // temporary habit id
+      const res = await getLogs(1);
       setLogs(res.data);
     } catch (err) {
       console.error(err);
@@ -46,94 +46,73 @@ function Dashboard() {
     <Box
       sx={{
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #1e3c72, #2a5298)",
+        backgroundColor: "#F5F7FA",
         py: 4
       }}
     >
       <Container maxWidth="lg">
 
-        {/* Heading */}
-        <motion.div
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-        >
-          <Typography
-            variant="h4"
-            align="center"
-            gutterBottom
-            sx={{ color: "#fff", fontWeight: "bold" }}
-          >
-            🚀 Smart Habit Tracker
+        {/* HEADING */}
+        <motion.div initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+          <Typography variant="h4" fontWeight="bold" gutterBottom>
+            Dashboard 📊
           </Typography>
         </motion.div>
 
-        {/* 🔥 ANALYTICS CARDS (NEW) */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        {/* STATS */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid item xs={12} md={3}>
-            <Paper sx={{ p: 3, textAlign: "center", borderRadius: 3 }}>
-              <Typography variant="h6">Active Habits</Typography>
+            <Paper sx={cardStyle}>
+              <Typography color="text.secondary">Active Habits</Typography>
               <Typography variant="h4">{habits.length}</Typography>
             </Paper>
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <Paper sx={{ p: 3, textAlign: "center", borderRadius: 3 }}>
-              <Typography variant="h6">Completion Rate</Typography>
-              <Typography variant="h4" color="error">
+            <Paper sx={cardStyle}>
+              <Typography color="text.secondary">Completion Rate</Typography>
+              <Typography variant="h4" sx={{ color: "#4CAF50" }}>
                 24%
               </Typography>
             </Paper>
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <Paper sx={{ p: 3, textAlign: "center", borderRadius: 3 }}>
-              <Typography variant="h6">Current Streak</Typography>
-              <Typography variant="h4" color="warning.main">
-                0
-              </Typography>
+            <Paper sx={cardStyle}>
+              <Typography color="text.secondary">Current Streak</Typography>
+              <Typography variant="h4">0</Typography>
             </Paper>
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <Paper sx={{ p: 3, textAlign: "center", borderRadius: 3 }}>
-              <Typography variant="h6">Longest Streak</Typography>
-              <Typography variant="h4" color="success.main">
+            <Paper sx={cardStyle}>
+              <Typography color="text.secondary">Longest Streak</Typography>
+              <Typography variant="h4" sx={{ color: "#4CAF50" }}>
                 11
               </Typography>
             </Paper>
           </Grid>
         </Grid>
 
-        {/* Form */}
-        <motion.div
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-        >
-          <Paper
-            elevation={4}
-            sx={{
-              p: 3,
-              mb: 3,
-              borderRadius: 3
-            }}
-          >
-            <HabitForm
-              refresh={fetchHabits}
-              editHabit={editHabit}
-              setEditHabit={setEditHabit}
-            />
-          </Paper>
-        </motion.div>
+        {/* FORM */}
+        <Paper sx={sectionStyle}>
+          <Typography variant="h6" mb={2}>
+            Add / Edit Habit
+          </Typography>
 
-        {/* Habit List */}
-        <Paper
-          elevation={4}
-          sx={{
-            p: 3,
-            mb: 3,
-            borderRadius: 3
-          }}
-        >
+          <HabitForm
+            refresh={fetchHabits}
+            editHabit={editHabit}
+            setEditHabit={setEditHabit}
+          />
+        </Paper>
+
+        {/* LIST */}
+        <Paper sx={sectionStyle}>
+          <Typography variant="h6" mb={2}>
+            Your Habits
+          </Typography>
+
           <HabitList
             habits={habits}
             refresh={fetchHabits}
@@ -141,34 +120,43 @@ function Dashboard() {
           />
         </Paper>
 
-        {/* 🔥 CHART SECTION (NEW) */}
-        <Paper
-          elevation={4}
-          sx={{
-            p: 3,
-            mb: 3,
-            borderRadius: 3,
-            display: "flex",
-            justifyContent: "center"
-          }}
-        >
-          <PieChartView />
-        </Paper>
+        {/* CHART + CALENDAR */}
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Paper sx={sectionStyle}>
+              <Typography variant="h6" mb={2}>
+                Progress Chart
+              </Typography>
+              <PieChartView />
+            </Paper>
+          </Grid>
 
-        {/* Calendar */}
-        <Paper
-          elevation={4}
-          sx={{
-            p: 3,
-            borderRadius: 3
-          }}
-        >
-          <MUICalendar logs={logs} />
-        </Paper>
+          <Grid item xs={12} md={6}>
+            <Paper sx={sectionStyle}>
+              <Typography variant="h6" mb={2}>
+                Activity Calendar
+              </Typography>
+              <MUICalendar logs={logs} />
+            </Paper>
+          </Grid>
+        </Grid>
 
       </Container>
     </Box>
   );
 }
+
+/* COMMON STYLES */
+const cardStyle = {
+  p: 3,
+  borderRadius: "12px",
+  textAlign: "center"
+};
+
+const sectionStyle = {
+  p: 3,
+  mb: 3,
+  borderRadius: "12px"
+};
 
 export default Dashboard;
