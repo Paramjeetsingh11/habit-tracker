@@ -1,12 +1,28 @@
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-import './App.css';
+// Pages
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+
+// Components
+import Navbar from "./components/Navbar";
 
 function App() {
   return (
-    <div>
-      <h1>Habit Tracker</h1>
-      <p>Welcome to Habit Tracker App</p>
-    </div>
+    <Router>
+      {/* ✅ Global Navbar */}
+      <Navbar />
+
+      {/* ✅ Routes */}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </Router>
   );
 }
 
