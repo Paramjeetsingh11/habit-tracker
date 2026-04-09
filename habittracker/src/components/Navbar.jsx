@@ -1,11 +1,20 @@
 import React from "react";
 import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    navigate("/login");
+    window.location.reload(); // refresh UI
+  };
+
   return (
-    <AppBar 
-      position="static" 
+    <AppBar
+      position="static"
       elevation={1}
       sx={{
         backgroundColor: "#ffffff",
@@ -15,7 +24,7 @@ const Navbar = () => {
     >
       <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
 
-        {/* 🔹 LEFT: LOGO */}
+        {/* LOGO */}
         <Typography
           variant="h6"
           component={Link}
@@ -29,55 +38,70 @@ const Navbar = () => {
           HabitTracker
         </Typography>
 
-        {/* 🔹 CENTER: LINKS */}
-        <Box sx={{ display: "flex", gap: 3 }}>
-          <Button
-            component={Link}
-            to="/"
-            sx={{ color: "#333", textTransform: "none" }}
-          >
+        {/* CENTER NAV */}
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Button component={Link} to="/" sx={{ color: "#333" }}>
             Home
           </Button>
 
+          {/* ✅ SHOW DASHBOARD ONLY WHEN LOGGED IN */}
+          {user && (
+            <Button component={Link} to="/dashboard" sx={{ color: "#333" }}>
+              Dashboard
+            </Button>
+          )}
         </Box>
 
-        {/* 🔹 RIGHT: AUTH BUTTONS */}
+        {/* RIGHT SIDE */}
         <Box sx={{ display: "flex", gap: 2 }}>
-          <Button
-            component={Link}
-            to="/login"
-            variant="outlined"
-            sx={{
-              borderColor: "#4CAF50",
-              color: "#4CAF50",
-              textTransform: "none",
-              borderRadius: "8px",
-              "&:hover": {
-                backgroundColor: "#E8F5E9",
-                borderColor: "#4CAF50"
-              }
-            }}
-          >
-            Sign In
-          </Button>
 
-          <Button
-            component={Link}
-            to="/register"
-            variant="contained"
-            sx={{
-              backgroundColor: "#4CAF50",
-              textTransform: "none",
-              borderRadius: "8px",
-              "&:hover": {
-                backgroundColor: "#43A047"
-              }
-            }}
-          >
-            Sign Up
-          </Button>
+          {/* NOT LOGGED IN */}
+          {!user && (
+            <>
+              <Button
+                component={Link}
+                to="/login"
+                variant="outlined"
+                sx={{
+                  borderColor: "#4CAF50",
+                  color: "#4CAF50",
+                  borderRadius: "8px"
+                }}
+              >
+                Sign In
+              </Button>
+
+              <Button
+                component={Link}
+                to="/signup"
+                variant="contained"
+                sx={{
+                  backgroundColor: "#4CAF50",
+                  borderRadius: "8px",
+                  "&:hover": { backgroundColor: "#43A047" }
+                }}
+              >
+                Sign Up
+              </Button>
+            </>
+          )}
+
+          {/* LOGGED IN */}
+          {user && (
+            <Button
+              variant="contained"
+              onClick={handleLogout}
+              sx={{
+                backgroundColor: "#f44336",
+                borderRadius: "8px",
+                "&:hover": { backgroundColor: "#d32f2f" }
+              }}
+            >
+              Logout
+            </Button>
+          )}
+
         </Box>
-
       </Toolbar>
     </AppBar>
   );
