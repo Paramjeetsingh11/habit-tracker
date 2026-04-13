@@ -73,7 +73,7 @@ const Navbar = () => {
 
               <Button
                 component={Link}
-                to="/signup"
+                to="/register"
                 variant="contained"
                 sx={{
                   backgroundColor: "#4CAF50",
