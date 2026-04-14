@@ -1,4 +1,4 @@
-// src/pages/Dashboard.js
+// src/pages/Dashboard.jsx
 
 import { useEffect, useState } from "react";
 import { getHabits, getLogs } from "../api/habitApi";

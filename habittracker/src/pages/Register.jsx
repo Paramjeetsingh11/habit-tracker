@@ -1,3 +1,4 @@
+// src/pages/Register.jsx
 import React, { useState, useEffect } from "react";
 import {
   Container, Paper, TextField, Typography, Button, Box,
@@ -267,7 +268,7 @@ function Register() {
         autoHideDuration={3000}
         onClose={handleClose}
         anchorOrigin={{ vertical: "top", horizontal: "top" }}
-        sx={{ mt: 10 }} // 🔥 push it below navbar & above form
+        sx={{ mt: 8 }} // 🔥 push it below navbar & above form
       >
         <Alert severity={snackbar.severity} variant="filled">
           {snackbar.message}

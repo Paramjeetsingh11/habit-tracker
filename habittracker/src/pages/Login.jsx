@@ -1,3 +1,4 @@
+// src/pages/Login.jsx
 import React, { useState } from "react";
 import {
   Container,
@@ -77,7 +78,15 @@ function Login() {
 
       showSnackbar("Login Successful ✅", "success");
 
-      localStorage.setItem("user", JSON.stringify(res.data));
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      // store only safe fields
+      // localStorage.setItem("user", JSON.stringify({
+      //   id: res.data.user.id,
+      //   name: res.data.user.name,
+      //   email: res.data.user.email
+      // }));
 
       setTimeout(() => navigate("/dashboard"), 1000);
     } catch (err) {
@@ -187,6 +196,8 @@ function Login() {
         open={snackbar.open}
         autoHideDuration={3000}
         onClose={handleClose}
+        anchorOrigin={{ vertical: "top", horizontal: "top" }}
+        sx={{ mt: 8 }} // 🔥 push it below navbar & above form
       >
         <Alert
           severity={snackbar.severity}

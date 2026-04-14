@@ -295,7 +295,13 @@ function ForgotPassword() {
         )}
       </Paper>
 
-      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleClose}>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        sx={{ mt: 8 }}
+      >
         <Alert severity={snackbar.severity} variant="filled">
           {snackbar.message}
         </Alert>

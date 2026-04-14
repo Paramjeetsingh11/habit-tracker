@@ -1,5 +1,6 @@
 // controllers/userController.js
 const db = require("../db");
+const jwt = require("jsonwebtoken");
 
 // ================= REGISTER USER =================
 exports.registerUser = (req, res) => {
@@ -23,6 +24,8 @@ exports.registerUser = (req, res) => {
 };
 
 // ================= LOGIN USER =================
+
+// LOGIN USER WITH JWT
 exports.loginUser = (req, res) => {
   const { email, password } = req.body;
 
@@ -35,7 +38,21 @@ exports.loginUser = (req, res) => {
       return res.status(401).send("Invalid credentials ❌");
     }
 
-    res.json(result[0]);
+    const user = result[0];
+
+    // 🔥 CREATE TOKEN
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // ✅ SEND TOKEN + USER
+    res.json({
+      message: "Login successful ✅",
+      token,
+      user
+    });
   });
 };
 

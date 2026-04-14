@@ -1,3 +1,4 @@
+// src/components/Navbar.jsx
 import React from "react";
 import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,10 +8,10 @@ const Navbar = () => {
   const user = JSON.parse(localStorage.getItem("user"));
 
   const handleLogout = () => {
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/login");
-    window.location.reload(); // refresh UI
-  };
+    window.location.href = "/login";
+  };  
 
   return (
     <AppBar
