@@ -1,9 +1,12 @@
+// controllers/userController.js
 const db = require("../db");
+const jwt = require("jsonwebtoken");
 
-// REGISTER USER
+// ================= REGISTER USER =================
 exports.registerUser = (req, res) => {
   const { name, email, password } = req.body;
 
+  // ❌ REMOVE OTP from here
   if (!name || !email || !password) {
     return res.status(400).send("All fields required ❌");
   }
@@ -16,11 +19,13 @@ exports.registerUser = (req, res) => {
       return res.status(500).send("User already exists or error ❌");
     }
 
-    res.send("User registered ✅");
+    res.send("User registered successfully ✅");
   });
 };
 
-// LOGIN USER
+// ================= LOGIN USER =================
+
+// LOGIN USER WITH JWT
 exports.loginUser = (req, res) => {
   const { email, password } = req.body;
 
@@ -33,9 +38,25 @@ exports.loginUser = (req, res) => {
       return res.status(401).send("Invalid credentials ❌");
     }
 
-    res.json(result[0]); // return user data
+    const user = result[0];
+
+    // 🔥 CREATE TOKEN
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // ✅ SEND TOKEN + USER
+    res.json({
+      message: "Login successful ✅",
+      token,
+      user
+    });
   });
 };
+
+// ================= GET USERS =================
 exports.getAllUsers = (req, res) => {
   const sql = "SELECT id, name, email, created_at FROM users";
 
@@ -49,7 +70,7 @@ exports.getAllUsers = (req, res) => {
   });
 };
 
-// DELETE USER
+// ================= DELETE USER =================
 exports.deleteUser = (req, res) => {
   const userId = req.params.id;
 
@@ -66,5 +87,50 @@ exports.deleteUser = (req, res) => {
     }
 
     res.send("User deleted successfully 🗑️");
+  });
+};
+
+// ================= FORGOT PASSWORD =================
+// 🔥 OTP ALREADY VERIFIED IN FRONTEND → NO NEED AGAIN
+exports.forgotPassword = (req, res) => {
+  const { email, newPassword } = req.body;
+
+  if (!email || !newPassword) {
+    return res.status(400).send("Email and new password required ❌");
+  }
+
+  const sql = "UPDATE users SET password = ? WHERE email = ?";
+
+  db.query(sql, [newPassword, email], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send("Error updating password ❌");
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).send("User not found ❌");
+    }
+
+    res.send("Password updated successfully ✅");
+  });
+};
+
+// ================= RESET PASSWORD =================
+exports.resetPassword = (req, res) => {
+  const { email, newPassword } = req.body;
+
+  if (!email || !newPassword) {
+    return res.status(400).send("Email and new password required ❌");
+  }
+
+  const sql = "UPDATE users SET password = ? WHERE email = ?";
+
+  db.query(sql, [newPassword, email], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send("Error updating password ❌");
+    }
+
+    res.send("Password reset successful ✅");
   });
 };

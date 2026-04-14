@@ -14,9 +14,10 @@ function MUICalendar() {
   return (
     <Card
       sx={{
-        maxWidth: 400,
-        margin: "40px auto",
-        borderRadius: 3,
+        maxWidth: 350,
+        height: 350,
+        margin: "0px auto",
+        borderRadius: 2,
         boxShadow: 3,
       }}
     >
