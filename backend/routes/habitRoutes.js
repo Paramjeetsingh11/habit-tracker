@@ -1,3 +1,4 @@
+// routes/habitRoutes.js
 const express = require("express");
 const router = express.Router();
 
@@ -18,5 +19,7 @@ router.delete("/delete-habit/:id", habitController.deleteHabit);
 router.get("/logs/:habitId", habitController.getLogs);
 
 router.post("/mark", habitController.markHabit);
+
+router.get("/streak/:habitId", habitController.getStreak);
 
 module.exports = router;
