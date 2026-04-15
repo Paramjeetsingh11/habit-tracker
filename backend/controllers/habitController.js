@@ -129,3 +129,48 @@ exports.markHabit = (req, res) => {
     }
   });
 };
+
+// GET STREAK DATA
+exports.getStreak = (req, res) => {
+  const { habitId } = req.params;
+
+  const sql = `
+    SELECT date, status 
+    FROM habit_logs 
+    WHERE habit_id = ?
+    ORDER BY date ASC
+  `;
+
+  db.query(sql, [habitId], (err, rows) => {
+    if (err) return res.status(500).send(err);
+
+    let currentStreak = 0;
+    let longestStreak = 0;
+    let tempStreak = 0;
+
+    const today = new Date().toISOString().split("T")[0];
+
+    rows.forEach((log) => {
+      if (log.status === "completed") {
+        tempStreak++;
+        longestStreak = Math.max(longestStreak, tempStreak);
+      } else {
+        tempStreak = 0;
+      }
+    });
+
+    // 🔥 CURRENT STREAK (reverse check from today)
+    for (let i = rows.length - 1; i >= 0; i--) {
+      if (rows[i].status === "completed") {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+
+    res.json({
+      currentStreak,
+      longestStreak,
+    });
+  });
+};

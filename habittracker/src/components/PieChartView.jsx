@@ -1,3 +1,4 @@
+// src/components/PieChartView.jsx
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
 
 const data = [
