@@ -79,14 +79,12 @@ function Login() {
       showSnackbar("Login Successful ✅", "success");
 
       localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-
       // store only safe fields
-      // localStorage.setItem("user", JSON.stringify({
-      //   id: res.data.user.id,
-      //   name: res.data.user.name,
-      //   email: res.data.user.email
-      // }));
+      localStorage.setItem("user", JSON.stringify({
+        id: res.data.user.id,
+        name: res.data.user.name,
+        email: res.data.user.email
+      }));
 
       setTimeout(() => navigate("/dashboard"), 1000);
     } catch (err) {

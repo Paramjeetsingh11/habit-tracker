@@ -1,8 +1,9 @@
+// controllers/habitController.js
 const db = require("../db");
 
 // CREATE HABIT
 exports.createHabit = (req, res) => {
-  const { user_id, title, type, goal_days } = req.body;
+  const { user_id, title, type, goal_days, start_date, end_date } = req.body;
 
   // 🔴 VALIDATION
   if (!user_id || !title || !type || !goal_days) {
@@ -15,9 +16,9 @@ exports.createHabit = (req, res) => {
   }
 
   const sql =
-    "INSERT INTO habits (user_id, title, type, goal_days) VALUES (?, ?, ?, ?)";
+  "INSERT INTO habits (user_id, title, type, goal_days, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?)";
 
-  db.query(sql, [user_id, title, type, goal_days], (err, result) => {
+  db.query(sql, [user_id, title, type, goal_days, start_date, end_date], (err, result) => {
     if (err) {
       console.error(err);
       return res.status(500).send("Error creating habit");
@@ -43,14 +44,14 @@ exports.getHabits = (req, res) => {
 
 // UPDATE HABIT
 exports.updateHabit = (req, res) => {
-  const { title, type, goal_days } = req.body;
+  const { title, type, goal_days, start_date, end_date } = req.body;
 
   const sql =
-    "UPDATE habits SET title = ?, type = ?, goal_days = ? WHERE id = ?";
+  "UPDATE habits SET title = ?, type = ?, goal_days = ?, start_date = ?, end_date = ? WHERE id = ?";
 
   db.query(
-    sql,
-    [title, type, goal_days, req.params.id],
+  sql,
+  [title, type, goal_days, start_date, end_date, req.params.id],
     (err, result) => {
       if (err) {
         console.error(err);

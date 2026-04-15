@@ -39,6 +39,8 @@ exports.loginUser = (req, res) => {
     }
 
     const user = result[0];
+    // remove password
+    delete user.password;
 
     // 🔥 CREATE TOKEN
     const token = jwt.sign(

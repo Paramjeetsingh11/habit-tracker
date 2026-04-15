@@ -131,36 +131,37 @@ function Dashboard() {
           </Grid>
 
           {/* ✅ RIGHT SIDE (CALENDAR FIXED POSITION) */}
-          <Grid item xs={20} md={4}>
-
-            <Paper sx={{ ...sectionStyle, p: 2, height: "400px" }}>
-              <Typography variant="h6" mb={2} >
-                Activity Calendar 
+          {/* ✅ RIGHT SIDE (CALENDAR FIXED POSITION) */}
+          <Grid item xs={12} md={4}>
+            <Paper sx={{ ...sectionStyle, p: 2 }}>
+              <Typography variant="h6" mb={2}>
+                Activity Calendar
               </Typography>
 
               <Box
                 sx={{
                   width: "100%",
-                  maxWidth: 500,
                   mx: "auto",
-                  height: "400px",
 
                   "& .react-calendar": {
-                    width: "50%",
-                    height: "50%",
+                    width: "100%",
                     border: "none",
-                    fontSize: "0.75rem"
+                    fontSize: "0.85rem",
+                    fontFamily: "inherit",
                   },
 
                   "& .react-calendar__tile": {
-                    padding: "6px 0"
-                  }
+                    padding: "10px 6px",
+                  },
+
+                  "& .react-calendar__navigation": {
+                    marginBottom: "8px",
+                  },
                 }}
               >
                 <MUICalendar logs={logs} />
               </Box>
             </Paper>
-
           </Grid>
 
         </Grid>
