@@ -1,8 +1,6 @@
-// src/components/MUICalendar.jsx
-
 import * as React from "react";
 import dayjs from "dayjs";
-import { markHabit } from "../api/habitApi";
+import { markHabit, getLogs } from "../api/habitApi";
 
 import { Card, CardContent, Typography } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -16,9 +14,10 @@ function MUICalendar({
   habitId,
   startDate,
   endDate,
+  refreshStreak,
+  streak
 }) {
   const [value, setValue] = React.useState(dayjs());
-
   const today = dayjs().format("YYYY-MM-DD");
 
   // ✅ Get status
@@ -29,18 +28,41 @@ function MUICalendar({
     return found?.status;
   };
 
+  const iconStyle = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    fontSize: "10px",
+    pointerEvents: "none",
+  };
+
   return (
     <Card
       sx={{
-        maxWidth: 350,
+        maxWidth: 300,
         height: 380,
         margin: "0 auto",
         borderRadius: 2,
         boxShadow: 3,
       }}
     >
-      <CardContent>
-        <Typography variant="h6" fontWeight="bold" gutterBottom>
+      <CardContent sx={{ p: 1.5 }}>
+
+        {/* 🔥 STREAK */}
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: "bold",
+            color: "#ff5722",
+            textAlign: "center",
+            mb: 0.5
+          }}
+        >
+          🔥 {streak?.currentStreak || 0}-day streak
+        </Typography>
+
+        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
           📅 Habit Calendar
         </Typography>
 
@@ -48,6 +70,25 @@ function MUICalendar({
           <DateCalendar
             value={value}
             onChange={(newValue) => setValue(newValue)}
+
+            sx={{
+              width: "100%",
+
+              "& .MuiPickersCalendarHeader-root": {
+                fontSize: "0.8rem",
+              },
+
+              "& .MuiDayCalendar-weekDayLabel": {
+                fontSize: "0.7rem",
+              },
+
+              "& .MuiPickersDay-root": {
+                width: 32,
+                height: 32,
+                fontSize: "0.75rem",
+                margin: "2px",
+              },
+            }}
 
             slots={{
               day: (props) => {
@@ -61,20 +102,35 @@ function MUICalendar({
                   <div style={{ position: "relative" }}>
                     <PickersDay
                       {...props}
-
-                      // ❌ Disable past + future
                       disabled={isPast || isFuture}
+                      sx={{
+                        ...(status === "completed" && {
+                          backgroundColor: "#4CAF50 !important",
+                          color: "white",
+                        }),
+
+                        ...(status === "visited" && {
+                          backgroundColor: "#FFA726 !important",
+                          color: "white",
+                        }),
+
+                        ...(status === "missed" && {
+                          backgroundColor: "#EF5350 !important",
+                          color: "white",
+                        }),
+
+                        ...(date === today && {
+                          border: "2px solid #1976d2",
+                        }),
+                      }}
 
                       onClick={async (e) => {
                         e.stopPropagation();
                         e.preventDefault();
 
                         if (!habitId) return;
-
-                        // ❌ Only today allowed
                         if (date !== today) return;
 
-                        // 🚫 respect habit range
                         if (
                           (startDate && date < startDate) ||
                           (endDate && date > endDate)
@@ -83,9 +139,9 @@ function MUICalendar({
                         let newStatus = "completed";
 
                         if (status === "completed") newStatus = "missed";
-                        else if (status === "missed") newStatus = "completed";
+                        else if (status === "missed") newStatus = "visited";
+                        else if (status === "visited") newStatus = "completed";
 
-                        // ✅ Update only today
                         const exists = logs.find(
                           (l) =>
                             dayjs(l.date).format("YYYY-MM-DD") === date
@@ -100,56 +156,41 @@ function MUICalendar({
                               : l
                           );
                         } else {
-                          updatedLogs = [...logs, { date, status: newStatus }];
+                          updatedLogs = [
+                            ...logs,
+                            { date, status: newStatus },
+                          ];
                         }
 
                         setLogs(updatedLogs);
 
-                        // ✅ Save to DB
                         try {
                           await markHabit({
                             habit_id: habitId,
                             date,
                             status: newStatus,
                           });
+
+                          const res = await getLogs(habitId);
+                          setLogs(res.data);
+
+                          if (refreshStreak) {
+                            await refreshStreak(habitId);
+                          }
                         } catch (err) {
                           console.error(err);
                         }
                       }}
                     />
 
-                    {/* 🔵 TODAY HIGHLIGHT (optional override) */}
-                    {date === today && (
-                      <span
-                        style={{
-                          position: "absolute",
-                          top: 2,
-                          right: 6,
-                          fontSize: "8px",
-                          color: "#1976d2",
-                        }}
-                      >
-                        ●
-                      </span>
+                    {status === "completed" && (
+                      <span style={iconStyle}>✔</span>
                     )}
-
-                    {/* DOT INDICATOR */}
-                    {status && (
-                      <span
-                        style={{
-                          position: "absolute",
-                          bottom: 4,
-                          left: "50%",
-                          transform: "translateX(-50%)",
-                          fontSize: "10px",
-                          color:
-                            status === "completed"
-                              ? "green"
-                              : "red",
-                        }}
-                      >
-                        ●
-                      </span>
+                    {status === "visited" && (
+                      <span style={iconStyle}>👁</span>
+                    )}
+                    {status === "missed" && (
+                      <span style={iconStyle}>✖</span>
                     )}
                   </div>
                 );

@@ -1,7 +1,7 @@
 // src/api/habitApi.js
 import axios from "axios";
 
-// ✅ BASE URL (single source)
+// ✅ BASE URL
 const BASE_URL = "http://localhost:5000";
 
 // ================= HABITS =================
@@ -9,7 +9,7 @@ const BASE_URL = "http://localhost:5000";
 // GET ALL HABITS
 export const getHabits = (userId) => {
   return axios.get(`${BASE_URL}/habits/${userId}`);
-};  
+};
 
 // ADD HABIT
 export const addHabit = (data) => {
@@ -33,13 +33,14 @@ export const getLogs = (habitId) => {
   return axios.get(`${BASE_URL}/logs/${habitId}`);
 };
 
-// MARK / TOGGLE HABIT (Calendar click)
+// MARK / TOGGLE HABIT
 export const markHabit = (data) => {
   return axios.post(`${BASE_URL}/mark`, data);
 };
 
-// GET STREAK
+// ================= STREAK =================
+
+// ✅ CORRECT FRONTEND API CALL
 export const getStreak = (habitId) => {
   return axios.get(`${BASE_URL}/streak/${habitId}`);
 };
-
