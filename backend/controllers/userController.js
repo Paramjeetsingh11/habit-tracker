@@ -94,6 +94,7 @@ exports.deleteUser = (req, res) => {
 
 // ================= FORGOT PASSWORD =================
 // 🔥 OTP ALREADY VERIFIED IN FRONTEND → NO NEED AGAIN
+// ================= FORGOT PASSWORD =================
 exports.forgotPassword = (req, res) => {
   const { email, newPassword } = req.body;
 
@@ -101,19 +102,31 @@ exports.forgotPassword = (req, res) => {
     return res.status(400).send("Email and new password required ❌");
   }
 
-  const sql = "UPDATE users SET password = ? WHERE email = ?";
+  // 🔥 STEP 1: CHECK USER EXISTS
+  const checkSql = "SELECT * FROM users WHERE email = ?";
 
-  db.query(sql, [newPassword, email], (err, result) => {
+  db.query(checkSql, [email], (err, result) => {
     if (err) {
       console.error(err);
-      return res.status(500).send("Error updating password ❌");
+      return res.status(500).send("Server error ❌");
     }
 
-    if (result.affectedRows === 0) {
-      return res.status(404).send("User not found ❌");
+    // ❌ USER NOT FOUND
+    if (result.length === 0) {
+      return res.status(404).send("User not registered ❌");
     }
 
-    res.send("Password updated successfully ✅");
+    // ✅ STEP 2: UPDATE PASSWORD
+    const updateSql = "UPDATE users SET password = ? WHERE email = ?";
+
+    db.query(updateSql, [newPassword, email], (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send("Error updating password ❌");
+      }
+
+      res.send("Password updated successfully ✅");
+    });
   });
 };
 
