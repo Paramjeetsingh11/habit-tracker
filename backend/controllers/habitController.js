@@ -129,3 +129,80 @@ exports.markHabit = (req, res) => {
     }
   });
 };
+
+exports.getStreak = (req, res) => {
+  const { habitId } = req.params;
+
+  const sql = `
+    SELECT date, status 
+    FROM habit_logs 
+    WHERE habit_id = ?
+    ORDER BY date ASC
+  `;
+
+  db.query(sql, [habitId], (err, rows) => {
+    if (err) return res.status(500).send(err);
+
+    const formatDate = (d) =>
+      new Date(d).toISOString().split("T")[0];
+
+    let currentStreak = 0;
+    let longestStreak = 0;
+    let tempStreak = 0;
+
+    let prevDate = null;
+
+    rows.forEach((log) => {
+      if (log.status === "completed") {
+        const currentDate = new Date(formatDate(log.date));
+
+        if (prevDate) {
+          const diff =
+            (currentDate - prevDate) / (1000 * 60 * 60 * 24);
+
+          if (diff === 1) {
+            tempStreak++;
+          } else {
+            tempStreak = 1;
+          }
+        } else {
+          tempStreak = 1;
+        }
+
+        prevDate = currentDate;
+        longestStreak = Math.max(longestStreak, tempStreak);
+      } else {
+        tempStreak = 0;
+        prevDate = null;
+      }
+    });
+
+    // 🔥 CURRENT STREAK
+    let lastDate = null;
+
+    for (let i = rows.length - 1; i >= 0; i--) {
+      if (rows[i].status === "completed") {
+        const currentDate = new Date(formatDate(rows[i].date));
+
+        if (!lastDate) {
+          currentStreak = 1;
+          lastDate = currentDate;
+        } else {
+          const diff =
+            (lastDate - currentDate) / (1000 * 60 * 60 * 24);
+
+          if (diff === 1) {
+            currentStreak++;
+            lastDate = currentDate;
+          } else {
+            break;
+          }
+        }
+      } else {
+        break;
+      }
+    }
+
+    res.json({ currentStreak, longestStreak });
+  });
+};

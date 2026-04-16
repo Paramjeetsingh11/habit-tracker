@@ -243,7 +243,7 @@ function Register() {
           />
 
           {/* CONFIRM */}
-          <TextField fullWidth label="Confirm Password"
+          <TextField fullWidth label="Confirm Password" 
             name="confirmPassword"
             error={!!errors.confirmPassword}
             helperText={errors.confirmPassword}
@@ -257,8 +257,18 @@ function Register() {
             Register
           </Button>
 
-          <Typography mt={2}>
-            Already have account? <Link to="/login">Login</Link>
+          <Typography mt={2} textAlign="center">
+            Already have account?{" "}
+            <Link
+              to="/login"
+              style={{
+                color: "#4CAF50",
+                fontWeight: "bold",
+                textDecoration: "none"
+              }}
+            >
+              Login
+            </Link>
           </Typography>
         </form>
       </Paper>
