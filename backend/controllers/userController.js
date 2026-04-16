@@ -1,37 +1,45 @@
 // controllers/userController.js
 const db = require("../db");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 // ================= REGISTER USER =================
-exports.registerUser = (req, res) => {
+exports.registerUser = async (req, res) => {
   const { name, email, password } = req.body;
 
-  // ❌ REMOVE OTP from here
   if (!name || !email || !password) {
     return res.status(400).send("All fields required ❌");
   }
 
-  const sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
+  try {
+    // 🔥 HASH PASSWORD
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  db.query(sql, [name, email, password], (err, result) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).send("User already exists or error ❌");
-    }
+    const sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
 
-    res.send("User registered successfully ✅");
-  });
+    db.query(sql, [name, email, hashedPassword], (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send("User already exists or error ❌");
+      }
+
+      res.send("User registered successfully ✅");
+    });
+
+  } catch (err) {
+    res.status(500).send("Error hashing password ❌");
+  }
 };
-
 // ================= LOGIN USER =================
 
 // LOGIN USER WITH JWT
+// ================= LOGIN USER =================
 exports.loginUser = (req, res) => {
   const { email, password } = req.body;
 
-  const sql = "SELECT * FROM users WHERE email = ? AND password = ?";
+  const sql = "SELECT * FROM users WHERE email = ?";
 
-  db.query(sql, [email, password], (err, result) => {
+  db.query(sql, [email], async (err, result) => {
     if (err) return res.status(500).send(err);
 
     if (result.length === 0) {
@@ -39,17 +47,36 @@ exports.loginUser = (req, res) => {
     }
 
     const user = result[0];
-    // remove password
+
+    let isMatch = false;
+
+    // 🔥 CHECK: hashed or plain
+    if (user.password.startsWith("$2b$")) {
+      // hashed
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      // plain text (old users)
+      isMatch = password === user.password;
+    }
+
+    if (!isMatch) {
+      return res.status(401).send("Invalid credentials ❌");
+    }
+
+    // ✅ OPTIONAL: upgrade old password to hashed
+    if (!user.password.startsWith("$2b$")) {
+      const hashed = await bcrypt.hash(password, 10);
+      db.query("UPDATE users SET password=? WHERE id=?", [hashed, user.id]);
+    }
+
     delete user.password;
 
-    // 🔥 CREATE TOKEN
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    // ✅ SEND TOKEN + USER
     res.json({
       message: "Login successful ✅",
       token,
@@ -95,57 +122,62 @@ exports.deleteUser = (req, res) => {
 // ================= FORGOT PASSWORD =================
 // 🔥 OTP ALREADY VERIFIED IN FRONTEND → NO NEED AGAIN
 // ================= FORGOT PASSWORD =================
-exports.forgotPassword = (req, res) => {
+exports.forgotPassword = async (req, res) => {
   const { email, newPassword } = req.body;
 
   if (!email || !newPassword) {
     return res.status(400).send("Email and new password required ❌");
   }
 
-  // 🔥 STEP 1: CHECK USER EXISTS
   const checkSql = "SELECT * FROM users WHERE email = ?";
 
-  db.query(checkSql, [email], (err, result) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).send("Server error ❌");
-    }
+  db.query(checkSql, [email], async (err, result) => {
+    if (err) return res.status(500).send("Server error ❌");
 
-    // ❌ USER NOT FOUND
     if (result.length === 0) {
       return res.status(404).send("User not registered ❌");
     }
 
-    // ✅ STEP 2: UPDATE PASSWORD
-    const updateSql = "UPDATE users SET password = ? WHERE email = ?";
+    try {
+      // 🔥 HASH NEW PASSWORD
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    db.query(updateSql, [newPassword, email], (err) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).send("Error updating password ❌");
-      }
+      const updateSql = "UPDATE users SET password = ? WHERE email = ?";
 
-      res.send("Password updated successfully ✅");
-    });
+      db.query(updateSql, [hashedPassword, email], (err) => {
+        if (err) return res.status(500).send("Error updating password ❌");
+
+        res.send("Password updated successfully ✅");
+      });
+
+    } catch {
+      res.status(500).send("Error hashing password ❌");
+    }
   });
 };
 
 // ================= RESET PASSWORD =================
-exports.resetPassword = (req, res) => {
+exports.resetPassword = async (req, res) => {
   const { email, newPassword } = req.body;
 
   if (!email || !newPassword) {
     return res.status(400).send("Email and new password required ❌");
   }
 
-  const sql = "UPDATE users SET password = ? WHERE email = ?";
+  try {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-  db.query(sql, [newPassword, email], (err, result) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).send("Error updating password ❌");
-    }
+    const sql = "UPDATE users SET password = ? WHERE email = ?";
 
-    res.send("Password reset successful ✅");
-  });
+    db.query(sql, [hashedPassword, email], (err) => {
+      if (err) {
+        return res.status(500).send("Error updating password ❌");
+      }
+
+      res.send("Password reset successful ✅");
+    });
+
+  } catch {
+    res.status(500).send("Error hashing password ❌");
+  }
 };

@@ -1,12 +1,13 @@
 // controllers/otpController.js
 const { sendOTP } = require("../utils/mailer");
+const db = require("../db");
 
 const otpStore = {};
 
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000);
 };
-const verifyOtpLogic = (email, otp) => {
+const verifyOtpLogic = (email, otp) => {       
   const record = otpStore[email];   
     if (!record) return false;
     if (record.expires < Date.now()) {
@@ -17,7 +18,7 @@ const verifyOtpLogic = (email, otp) => {
 
     delete otpStore[email];
     return true;
-};
+};   
 
 exports.sendOtp = async (req, res) => {
   const { email } = req.body;

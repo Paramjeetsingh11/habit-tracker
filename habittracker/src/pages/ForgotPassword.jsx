@@ -11,6 +11,9 @@ import {
 } from "@mui/material";
 import { sendOtp, resetPassword, verifyOtp } from "../api/userApi";
 import { useNavigate } from "react-router-dom";
+import { InputAdornment, IconButton } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+
 
 function ForgotPassword() {
   const navigate = useNavigate();
@@ -45,6 +48,8 @@ function ForgotPassword() {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const [showPassword, setShowPassword] = useState(false);
 
   // 🔥 TIMER
   useEffect(() => {
@@ -257,27 +262,46 @@ function ForgotPassword() {
         {/* STEP 3 */}
         {step === 3 && (
           <>
-            <TextField
-              fullWidth
-              label="New Password"
-              name="newPassword"
-              onChange={handleChange}
-              error={!!errors.newPassword}
-              helperText={
-                errors.newPassword ||
-                "Use uppercase, lowercase, number & special character"
-              }
-              sx={{ mb: 2 }}
-            />
-
-            <TextField
-              fullWidth
-              label="Confirm Password"
-              name="confirmPassword"
-              onChange={handleChange}
-              error={!!errors.confirmPassword}
-              helperText={errors.confirmPassword}
-            />
+          <TextField
+  fullWidth
+  label="New Password"
+  name="newPassword"
+  type={showPassword ? "text" : "password"}
+  onChange={handleChange}
+  error={!!errors.newPassword}
+  helperText={
+    errors.newPassword ||
+    "Use uppercase, lowercase, number & special character"
+  }
+  sx={{ mb: 2 }}
+  InputProps={{
+    endAdornment: (
+      <InputAdornment position="end">
+        <IconButton onClick={() => setShowPassword(!showPassword)}>
+          {showPassword ? <VisibilityOff /> : <Visibility />}
+        </IconButton>
+      </InputAdornment>
+    )
+  }}
+/>
+  <TextField
+  fullWidth
+  label="Confirm Password"
+  name="confirmPassword"
+  type={showPassword ? "text" : "password"}
+  onChange={handleChange}
+  error={!!errors.confirmPassword}
+  helperText={errors.confirmPassword}
+  InputProps={{
+    endAdornment: (
+      <InputAdornment position="end">
+        <IconButton onClick={() => setShowPassword(!showPassword)}>
+          {showPassword ? <VisibilityOff /> : <Visibility />}
+        </IconButton>
+      </InputAdornment>
+    )
+  }}
+/>
 
             <Button
               fullWidth
