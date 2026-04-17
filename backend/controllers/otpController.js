@@ -22,20 +22,35 @@ const verifyOtpLogic = (email, otp) => {
 exports.sendOtp = async (req, res) => {
   const { email } = req.body;
 
-  const otp = generateOTP();
+  // 🔥 CHECK USER EXISTS FIRST
+  const checkSql = "SELECT * FROM users WHERE email = ?";
 
-  otpStore[email] = {
-    otp,
-    expires: Date.now() + 5 * 60 * 1000,
-  };
+  db.query(checkSql, [email], async (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send("Server error ❌");
+    }
 
-  try {
-    await sendOTP(email, otp);
-    res.send("OTP sent ✅");
-  } catch (err) {
-    console.error("❌ MAIL ERROR:", err);
-    res.status(500).send("Error sending OTP ❌");
-  }
+    if (result.length === 0) {
+      return res.status(404).send("Email not registered ❌");
+    }
+
+    // ✅ CONTINUE OTP FLOW
+    const otp = generateOTP();
+
+    otpStore[email] = {
+      otp,
+      expires: Date.now() + 5 * 60 * 1000,
+    };
+
+    try {
+      await sendOTP(email, otp);
+      res.send("OTP sent ✅");
+    } catch (err) {
+      console.error("❌ MAIL ERROR:", err);
+      res.status(500).send("Error sending OTP ❌");
+    }
+  });
 };
 
 exports.verifyOtp = (req, res) => {

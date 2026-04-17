@@ -1,3 +1,4 @@
+// src/components/MUICalendar.jsx
 import * as React from "react";
 import dayjs from "dayjs";
 import { markHabit, getLogs } from "../api/habitApi";
@@ -20,12 +21,20 @@ function MUICalendar({
   const [value, setValue] = React.useState(dayjs());
   const today = dayjs().format("YYYY-MM-DD");
 
-  // ✅ Get status
+  // ✅ GET STATUS (DEFAULT = pending)
   const getStatus = (date) => {
     const found = logs.find(
       (l) => dayjs(l.date).format("YYYY-MM-DD") === date
     );
-    return found?.status;
+    return found?.status || "pending";
+  };
+
+  // ✅ CHECK RANGE
+  const isWithinRange = (date) => {
+    return (
+      (!startDate || date >= startDate) &&
+      (!endDate || date <= endDate)
+    );
   };
 
   const iconStyle = {
@@ -73,15 +82,12 @@ function MUICalendar({
 
             sx={{
               width: "100%",
-
               "& .MuiPickersCalendarHeader-root": {
                 fontSize: "0.8rem",
               },
-
               "& .MuiDayCalendar-weekDayLabel": {
                 fontSize: "0.7rem",
               },
-
               "& .MuiPickersDay-root": {
                 width: 32,
                 height: 32,
@@ -95,22 +101,20 @@ function MUICalendar({
                 const date = dayjs(props.day).format("YYYY-MM-DD");
                 const status = getStatus(date);
 
-                const isPast = date < today;
-                const isFuture = date > today;
+                const isToday = date === today;
+                const inRange = isWithinRange(date);
 
                 return (
                   <div style={{ position: "relative" }}>
                     <PickersDay
                       {...props}
-                      disabled={isPast || isFuture}
+
+                      // 🔥 DISABLE OUTSIDE RANGE
+                      disabled={!inRange}
+
                       sx={{
                         ...(status === "completed" && {
                           backgroundColor: "#4CAF50 !important",
-                          color: "white",
-                        }),
-
-                        ...(status === "visited" && {
-                          backgroundColor: "#FFA726 !important",
                           color: "white",
                         }),
 
@@ -119,7 +123,11 @@ function MUICalendar({
                           color: "white",
                         }),
 
-                        ...(date === today && {
+                        ...(status === "pending" && {
+                          backgroundColor: "#E0E0E0",
+                        }),
+
+                        ...(isToday && {
                           border: "2px solid #1976d2",
                         }),
                       }}
@@ -129,38 +137,22 @@ function MUICalendar({
                         e.preventDefault();
 
                         if (!habitId) return;
-                        if (date !== today) return;
+                        if (!inRange) return;
 
-                        if (
-                          (startDate && date < startDate) ||
-                          (endDate && date > endDate)
-                        ) return;
+                        // 🔥 ALLOW ONLY TODAY CLICK
+                        if (!isToday) return;
 
                         let newStatus = "completed";
 
                         if (status === "completed") newStatus = "missed";
-                        else if (status === "missed") newStatus = "visited";
-                        else if (status === "visited") newStatus = "completed";
+                        else if (status === "missed") newStatus = "completed";
 
-                        const exists = logs.find(
-                          (l) =>
-                            dayjs(l.date).format("YYYY-MM-DD") === date
+                        // 🔥 UPDATE UI FIRST
+                        const updatedLogs = logs.map((l) =>
+                          dayjs(l.date).format("YYYY-MM-DD") === date
+                            ? { ...l, status: newStatus }
+                            : l
                         );
-
-                        let updatedLogs;
-
-                        if (exists) {
-                          updatedLogs = logs.map((l) =>
-                            dayjs(l.date).format("YYYY-MM-DD") === date
-                              ? { ...l, status: newStatus }
-                              : l
-                          );
-                        } else {
-                          updatedLogs = [
-                            ...logs,
-                            { date, status: newStatus },
-                          ];
-                        }
 
                         setLogs(updatedLogs);
 
@@ -171,23 +163,23 @@ function MUICalendar({
                             status: newStatus,
                           });
 
+                          // 🔥 REFRESH FROM SERVER
                           const res = await getLogs(habitId);
                           setLogs(res.data);
 
                           if (refreshStreak) {
                             await refreshStreak(habitId);
                           }
+
                         } catch (err) {
                           console.error(err);
                         }
                       }}
                     />
 
+                    {/* ICONS */}
                     {status === "completed" && (
                       <span style={iconStyle}>✔</span>
-                    )}
-                    {status === "visited" && (
-                      <span style={iconStyle}>👁</span>
                     )}
                     {status === "missed" && (
                       <span style={iconStyle}>✖</span>
