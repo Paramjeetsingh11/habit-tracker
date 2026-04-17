@@ -1,61 +1,87 @@
 // controllers/habitController.js
 const db = require("../db");
 
-// CREATE HABIT
+// ================= CREATE HABIT =================
 exports.createHabit = (req, res) => {
   const { user_id, title, type, goal_days, start_date, end_date } = req.body;
 
   // 🔴 VALIDATION
-  if (!user_id || !title || !type || !goal_days) {
+  if (!user_id || !title || !type || !goal_days || !start_date || !end_date) {
     return res.status(400).send("All fields are required ❌");
   }
 
-  // Optional: validate type
   if (!["daily", "weekly"].includes(type)) {
     return res.status(400).send("Invalid habit type ❌");
   }
 
-  const sql =
-  "INSERT INTO habits (user_id, title, type, goal_days, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?)";
+  const insertHabitSql =
+    "INSERT INTO habits (user_id, title, type, goal_days, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?)";
 
-  db.query(sql, [user_id, title, type, goal_days, start_date, end_date], (err, result) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).send("Error creating habit");
+  db.query(
+    insertHabitSql,
+    [user_id, title, type, goal_days, start_date, end_date],
+    (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send("Error creating habit ❌");
+      }
+
+      const habitId = result.insertId;
+
+      // 🔥 AUTO CREATE LOGS FOR ALL DAYS
+      const start = new Date(start_date);
+      const end = new Date(end_date);
+
+      const logValues = [];
+
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const formattedDate = new Date(d).toISOString().split("T")[0];
+        logValues.push([habitId, formattedDate, "pending"]);
+      }
+
+      const insertLogsSql =
+        "INSERT INTO habit_logs (habit_id, date, status) VALUES ?";
+
+      db.query(insertLogsSql, [logValues], (err2) => {
+        if (err2) {
+          console.error(err2);
+          return res.status(500).send("Error creating logs ❌");
+        }
+
+        res.send("Habit + logs created successfully ✅");
+      });
     }
-
-    res.send("Habit created ✅");
-  });
+  );
 };
 
-// GET ALL HABITS
+// ================= GET ALL HABITS =================
 exports.getHabits = (req, res) => {
   const sql = "SELECT * FROM habits WHERE user_id = ?";
 
   db.query(sql, [req.params.userId], (err, result) => {
     if (err) {
       console.error(err);
-      return res.status(500).send("Error fetching habits");
+      return res.status(500).send("Error fetching habits ❌");
     }
 
     res.json(result);
   });
 };
 
-// UPDATE HABIT
+// ================= UPDATE HABIT =================
 exports.updateHabit = (req, res) => {
   const { title, type, goal_days, start_date, end_date } = req.body;
 
   const sql =
-  "UPDATE habits SET title = ?, type = ?, goal_days = ?, start_date = ?, end_date = ? WHERE id = ?";
+    "UPDATE habits SET title = ?, type = ?, goal_days = ?, start_date = ?, end_date = ? WHERE id = ?";
 
   db.query(
-  sql,
-  [title, type, goal_days, start_date, end_date, req.params.id],
-    (err, result) => {
+    sql,
+    [title, type, goal_days, start_date, end_date, req.params.id],
+    (err) => {
       if (err) {
         console.error(err);
-        return res.status(500).send("Error updating habit");
+        return res.status(500).send("Error updating habit ❌");
       }
 
       res.send("Habit updated ✏️");
@@ -63,28 +89,41 @@ exports.updateHabit = (req, res) => {
   );
 };
 
-// DELETE HABIT
+// ================= DELETE HABIT =================
 exports.deleteHabit = (req, res) => {
-  const sql = "DELETE FROM habits WHERE id = ?";
+  const habitId = req.params.id;
 
-  db.query(sql, [req.params.id], (err, result) => {
+  // 🔥 DELETE LOGS FIRST (IMPORTANT)
+  const deleteLogs = "DELETE FROM habit_logs WHERE habit_id = ?";
+  const deleteHabit = "DELETE FROM habits WHERE id = ?";
+
+  db.query(deleteLogs, [habitId], (err) => {
     if (err) {
       console.error(err);
-      return res.status(500).send("Error deleting habit");
+      return res.status(500).send("Error deleting logs ❌");
     }
 
-    res.send("Habit deleted 🗑️");
+    db.query(deleteHabit, [habitId], (err2) => {
+      if (err2) {
+        console.error(err2);
+        return res.status(500).send("Error deleting habit ❌");
+      }
+
+      res.send("Habit deleted 🗑️");
+    });
   });
 };
-// GET LOGS FOR CALENDAR
+
+// ================= GET LOGS =================
 exports.getLogs = (req, res) => {
-  const sql = "SELECT date, status FROM habit_logs WHERE habit_id = ?";
+  const sql =
+    "SELECT date, status FROM habit_logs WHERE habit_id = ? ORDER BY date ASC";
 
   db.query(sql, [req.params.habitId], (err, result) => {
-    if (err) return res.send(err);
+    if (err) return res.status(500).send(err);
 
-    const formatted = result.map(r => ({
-      date: r.date,
+    const formatted = result.map((r) => ({
+      date: new Date(r.date).toISOString().split("T")[0],
       status: r.status
     }));
 
@@ -92,7 +131,7 @@ exports.getLogs = (req, res) => {
   });
 };
 
-// MARK HABIT DONE
+// ================= MARK HABIT =================
 exports.markHabit = (req, res) => {
   const { habit_id, date, status } = req.body;
 
@@ -100,7 +139,6 @@ exports.markHabit = (req, res) => {
     return res.status(400).send("Missing data ❌");
   }
 
-  // Check if entry exists
   const checkSql =
     "SELECT * FROM habit_logs WHERE habit_id = ? AND date = ?";
 
@@ -108,7 +146,6 @@ exports.markHabit = (req, res) => {
     if (err) return res.status(500).send(err);
 
     if (result.length > 0) {
-      // Update existing
       const updateSql =
         "UPDATE habit_logs SET status = ? WHERE habit_id = ? AND date = ?";
 
@@ -116,20 +153,20 @@ exports.markHabit = (req, res) => {
         if (err) return res.status(500).send(err);
         res.send("Updated existing log 🔄");
       });
-
     } else {
-      // Insert new
+      // 🔥 fallback (should not happen normally)
       const insertSql =
         "INSERT INTO habit_logs (habit_id, date, status) VALUES (?, ?, ?)";
 
       db.query(insertSql, [habit_id, date, status], (err) => {
         if (err) return res.status(500).send(err);
-        res.send("Habit marked ✅");
+        res.send("Inserted new log ✅");
       });
     }
   });
 };
 
+// ================= STREAK =================
 exports.getStreak = (req, res) => {
   const { habitId } = req.params;
 
@@ -160,11 +197,8 @@ exports.getStreak = (req, res) => {
           const diff =
             (currentDate - prevDate) / (1000 * 60 * 60 * 24);
 
-          if (diff === 1) {
-            tempStreak++;
-          } else {
-            tempStreak = 1;
-          }
+          if (diff === 1) tempStreak++;
+          else tempStreak = 1;
         } else {
           tempStreak = 1;
         }
@@ -194,13 +228,9 @@ exports.getStreak = (req, res) => {
           if (diff === 1) {
             currentStreak++;
             lastDate = currentDate;
-          } else {
-            break;
-          }
+          } else break;
         }
-      } else {
-        break;
-      }
+      } else break;
     }
 
     res.json({ currentStreak, longestStreak });
