@@ -1,6 +1,7 @@
 // src/components/HabitForm.jsx
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import dayjs from "dayjs";
 import { addHabit, updateHabit } from "../api/habitApi";
 
 import {
@@ -25,8 +26,55 @@ function HabitForm({ refresh, editHabit, setEditHabit }) {
     if (editHabit) setForm(editHabit);
   }, [editHabit]);
 
+  // 🔥 HANDLE START DATE
+  const handleStartDateChange = (value) => {
+    if (!value) {
+      setForm({ ...form, start_date: "", end_date: "" });
+      return;
+    }
+
+    const start = dayjs(value);
+
+    const end = start
+      .add(Number(form.goal_days) - 1, "day")
+      .format("YYYY-MM-DD");
+
+    setForm({
+      ...form,
+      start_date: start.format("YYYY-MM-DD"),
+      end_date: end
+    });
+  };
+
+  // 🔥 HANDLE GOAL DAYS
+  const handleGoalChange = (value) => {
+    const goal = Number(value);
+
+    if (!form.start_date) {
+      setForm({ ...form, goal_days: goal });
+      return;
+    }
+
+    const start = dayjs(form.start_date);
+
+    const end = start
+      .add(goal - 1, "day")
+      .format("YYYY-MM-DD");
+
+    setForm({
+      ...form,
+      goal_days: goal,
+      end_date: end
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!form.start_date || !form.end_date) {
+      alert("Please select valid dates ❌");
+      return;
+    }
 
     if (editHabit) {
       await updateHabit(editHabit.id, form);
@@ -88,10 +136,9 @@ function HabitForm({ refresh, editHabit, setEditHabit }) {
             label="Days"
             type="number"
             value={form.goal_days}
-            onChange={(e) =>
-              setForm({ ...form, goal_days: e.target.value })
-            }
+            onChange={(e) => handleGoalChange(e.target.value)}
             sx={{ width: 120 }}
+            inputProps={{ min: 1 }}
           />
         </Box>
 
@@ -109,21 +156,22 @@ function HabitForm({ refresh, editHabit, setEditHabit }) {
             type="date"
             value={form.start_date || ""}
             onChange={(e) =>
-              setForm({ ...form, start_date: e.target.value })
+              handleStartDateChange(e.target.value)
             }
             InputLabelProps={{ shrink: true }}
+            inputProps={{
+              min: dayjs().format("YYYY-MM-DD") // 🔥 no past date
+            }}
             sx={{ width: 180 }}
           />
 
-          {/* END DATE */}
+          {/* END DATE (AUTO) */}
           <TextField
             label="End Date"
             type="date"
             value={form.end_date || ""}
-            onChange={(e) =>
-              setForm({ ...form, end_date: e.target.value })
-            }
             InputLabelProps={{ shrink: true }}
+            disabled // 🔥 cannot edit manually
             sx={{ width: 180 }}
           />
 

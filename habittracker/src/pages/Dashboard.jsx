@@ -43,8 +43,8 @@ function Dashboard() {
     }
   };
 
-  // ✅ FETCH LOGS + COMPLETION RATE
-  const fetchLogs = async (habitId) => {
+  // ✅ FETCH LOGS + FIXED COMPLETION %
+  const fetchLogs = async (habitId, habit) => {
     if (!habitId) return;
 
     try {
@@ -53,14 +53,19 @@ function Dashboard() {
 
       setLogs(data);
 
-      // 📊 COMPLETION RATE
-      const total = data.length;
-      const completed = data.filter(
+      // 🔥 TOTAL DAYS (GOAL BASED)
+      const totalDays = habit?.goal_days || 0;
+
+      // 🔥 COMPLETED DAYS
+      const completedDays = data.filter(
         (log) => log.status === "completed"
       ).length;
 
+      // ✅ CORRECT %
       const rate =
-        total === 0 ? 0 : Math.round((completed / total) * 100);
+        totalDays === 0
+          ? 0
+          : Math.round((completedDays / totalDays) * 100);
 
       setCompletionRate(rate);
 
@@ -89,7 +94,7 @@ function Dashboard() {
   // 🔥 UPDATE WHEN HABIT CHANGES
   useEffect(() => {
     if (selectedHabit) {
-      fetchLogs(selectedHabit.id);
+      fetchLogs(selectedHabit.id, selectedHabit);
       fetchStreak(selectedHabit.id);
     }
   }, [selectedHabit]);
@@ -103,14 +108,13 @@ function Dashboard() {
           {/* LEFT SIDE */}
           <Grid item xs={12} md={8}>
 
-            {/* HEADING */}
             <motion.div initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
               <Typography variant="h4" fontWeight="bold" gutterBottom>
                 Dashboard 📊
               </Typography>
             </motion.div>
 
-            {/* 🔥 STATS WITH VISUALIZATION */}
+            {/* STATS */}
             <Grid container spacing={3} sx={{ mb: 3 }}>
 
               {/* ACTIVE HABITS */}
@@ -125,8 +129,14 @@ function Dashboard() {
               <Grid item xs={12} sm={6} md={3}>
                 <Paper sx={cardStyle}>
                   <Typography color="text.secondary">Completion Rate</Typography>
+
                   <Typography variant="h4" sx={{ color: "#4CAF50" }}>
                     {completionRate}%
+                  </Typography>
+
+                  {/* 🔥 EXTRA INFO */}
+                  <Typography variant="body2">
+                    {logs.filter(l => l.status === "completed").length} / {selectedHabit?.goal_days || 0} days
                   </Typography>
 
                   <LinearProgress
@@ -184,8 +194,8 @@ function Dashboard() {
               />
             </Paper>
 
-            {/* HABITS */}
-            <Paper sx={{ ...sectionStyle, backgroundColor: "#1bbb5b", mt: 16, width: "160%" }}>
+            {/* HABIT LIST */}
+            <Paper sx={{ ...sectionStyle, mt: 16, width: "160%" }}>
               <Typography variant="h6" mb={2}>
                 Your Habits
               </Typography>
@@ -234,13 +244,29 @@ function Dashboard() {
                 sx={{
                   width: "100%",
                   display: "flex",
-                  justifyContent: "center",  // ✅ keeps it centered
+                  justifyContent: "center",
                   alignItems: "center",
                 }}
               >
                 <MUICalendar
                   logs={logs}
-                  setLogs={setLogs}
+                  setLogs={(updatedLogs) => {
+                    setLogs(updatedLogs);
+
+                    // 🔥 REAL-TIME % UPDATE
+                    const completedDays = updatedLogs.filter(
+                      (log) => log.status === "completed"
+                    ).length;
+
+                    const totalDays = selectedHabit?.goal_days || 0;
+
+                    const rate =
+                      totalDays === 0
+                        ? 0
+                        : Math.round((completedDays / totalDays) * 100);
+
+                    setCompletionRate(rate);
+                  }}
                   habitId={selectedHabit?.id}
                   startDate={selectedHabit?.start_date}
                   endDate={selectedHabit?.end_date}
